@@ -1,0 +1,160 @@
+/* =========================================================================
+   🌐 全域基礎設定 (Reset & Base)
+   ========================================================================= */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background-color: #0d1117; /* 深暗藍色背景，靈感來自 GitHub 暗黑模式 */
+  color: #c9d1d9;            /* 淡淡的灰白色文字，保護眼睛不刺眼 */
+  display: flex;
+  justify-content: center;   /* 讓內容水平居中 */
+  align-items: center;       /* 讓內容垂直居中 */
+  min-height: 100vh;         /* 撐滿整個螢幕高度 */
+}
+
+/* =========================================================================
+   🎴 註冊卡片外殼 (Container)
+   ========================================================================= */
+.auth-container {
+  background-color: #161b22; /* 比背景稍淺一點的科技黑 */
+  padding: 40px;
+  border-radius: 12px;       /* 圓角外觀 */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); /* 沉穩的立體陰影 */
+  width: 100%;
+  max-width: 400px;          /* 限制最大寬度，在手機或大螢幕上都好看 */
+  border: 1px solid #30363d; /* 細緻的邊框線，帶出硬體感 */
+}
+
+h2 {
+  color: #58a6ff;            /* 亮藍色，代表核心中樞 (Nexus) */
+  text-align: center;
+  letter-spacing: 2px;       /* 字距微調，更有科幻感 */
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #8b949e;
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+/* =========================================================================
+   ✍️ 表單與輸入框設定 (Form Inputs)
+   ========================================================================= */
+.input-group {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;    /* 讓 Label 標籤排在輸入框正上方 */
+}
+
+label {
+  font-size: 13px;
+  color: #8b949e;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+input {
+  background-color: #0d1117; /* 輸入框內嵌回深色背景 */
+  color: #ffffff;
+  border: 1px solid #30363d;
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 15px;
+  outline: none;             /* 拔除瀏覽器預設的醜邊框 */
+  transition: all 0.3s ease; /* 讓發光動畫變平滑 */
+}
+
+/* 當滑鼠點擊輸入框時，發出藍色的微光 (Focus 效果) */
+input:focus {
+  border-color: #58a6ff;
+  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+}
+
+/* =========================================================================
+   🚀 按鈕與訊息框設定 (Button & Messages)
+   ========================================================================= */
+button {
+  width: 100%;
+  background-color: #238636; /* 科技綠，代表初始化成功 */
+  color: #ffffff;
+  border: 1px solid rgba(240, 246, 252, 0.1);
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;           /* 滑鼠移過去變成手指圖案 */
+  margin-top: 10px;
+  transition: background-color 0.2s ease;
+}
+
+/* 滑鼠移到按鈕上時稍微變亮 */
+button:hover {
+  background-color: #2ea043;
+}
+
+/* 訊息提示小貼紙 */
+.message-box {
+  margin-top: 20px;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  text-align: center;
+  display: none;             /* 預設隱藏，等 JS 有訊息時才秀出來 */
+}
+
+/* 成功時的綠色外衣 */
+.message-box.success {
+  display: block;
+  background-color: rgba(56, 139, 60, 0.15);
+  border: 1px solid #388b3c;
+  color: #56d364;
+}
+
+/* 失敗時的紅色外衣 */
+.message-box.error {
+  display: block;
+  background-color: rgba(248, 81, 73, 0.15);
+  border: 1px solid #f85149;
+  color: #ff7b72;
+}
+
+/* Tab 切換按鈕列 */
+.tab-switcher {
+  display: flex;
+  margin-bottom: 20px;
+}
+
+/* 預設隱藏登入表單 */
+#loginForm {
+  display: none;
+}
+
+.tab-switcher button {
+  background-color: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  color: #8b949e;
+  width: 50%;
+  padding: 10px;
+  font-size: 15px;
+  margin-top: 0;
+}
+
+.tab-switcher button:hover {
+  color: #c9d1d9;
+  background-color: transparent;
+}
+
+/* 目前選中的 tab */
+.tab-switcher button.active {
+  color: #58a6ff;
+  border-bottom-color: #58a6ff;
+}
