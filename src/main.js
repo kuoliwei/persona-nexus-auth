@@ -118,7 +118,7 @@ registerForm.addEventListener('submit', async (event) => {
   } catch (error) {
     // 發生了網路斷線、後台根本沒開等「天災級」無法連線狀況
     console.error('💥 [天災] 前端連線發生嚴重錯誤，無法觸及後台伺服器！詳細崩潰原因：', error);
-    showMessage('error', '❌ 無法連線至伺服器中樞，請確認後台服務已開啟且 Port 8000 沒有被佔用。');
+    showMessage('error', '❌ 無法連線至服務器，請稍後重試。');
   } finally {
     console.log('🏁 [結束] 註冊請求事務處理完畢，重置按鈕狀態。');
     // 任務結束：不論成功或失敗，都把按鈕復原
@@ -185,7 +185,7 @@ loginForm.addEventListener('submit', async (event) => {
   } catch (error) {
     // 發生了網路斷線、後台根本沒開等「天災級」無法連線狀況
     console.error('💥 [天災] 前端連線發生嚴重錯誤，無法觸及後台伺服器！詳細崩潰原因：', error);
-    showMessage('error', '❌ 無法連線至伺服器中樞，請確認後台服務已開啟且 Port 8000 沒有被佔用。');
+    showMessage('error', '❌ 無法連線至服務器，請稍後重試。');
   } finally {
     console.log('🏁 [結束] 登入請求事務處理完畢，重置按鈕狀態。');
     // 任務結束：不論成功或失敗，都把按鈕復原
