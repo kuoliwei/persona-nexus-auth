@@ -112,7 +112,7 @@ registerForm.addEventListener('submit', async (event) => {
       registerForm.reset();
     } else {
       console.warn(`❌ [結果] 後台退回請求 (HTTP ${response.status})，理由：${result.message}`);
-      showMessage('error', `❌ 註冊失敗：${result.message}`);
+      showMessage('error', `❌ 註冊失敗：${result.message || '伺服器錯誤'}`);
     }
 
   } catch (error) {
@@ -179,7 +179,7 @@ loginForm.addEventListener('submit', async (event) => {
       }, 1500);
     } else {
       console.warn(`❌ [結果] 後台退回請求 (HTTP ${response.status})，理由：${result.message}`);
-      showMessage('error', `❌ 登入失敗：${result.message}`);
+      showMessage('error', `❌ 登入失敗：${result.message || '伺服器錯誤'}`);
     }
 
   } catch (error) {
