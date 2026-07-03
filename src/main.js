@@ -29,11 +29,23 @@ if (!registerForm || !emailInput || !passwordInput || !loginEmailInput || !login
 // 2. 載入設定並定義後台 API 的地址大門
 import { loadConfig, getConfig } from './config-loader.js';
 
-await loadConfig();
-const config = getConfig();
-const BACKEND_REGISTER_URL = `${config.services.gateway}/auth/register`;
-const BACKEND_LOGIN_URL = `${config.services.gateway}/auth/login`;
-const LOBBY_APP_URL = config.frontends.lobby;
+let config;
+let configLoadError = false;
+
+try {
+  await loadConfig();
+  config = getConfig();
+} catch (error) {
+  console.error('❌ [初始化失敗] 無法載入設定：', error);
+  configLoadError = true;
+  messageBox.textContent = '❌ 無法連線至服務器，請稍後重試。';
+  messageBox.classList.add('error');
+  messageBox.style.display = 'block';
+}
+
+const BACKEND_REGISTER_URL = configLoadError ? null : `${config.services.gateway}/auth/register`;
+const BACKEND_LOGIN_URL = configLoadError ? null : `${config.services.gateway}/auth/login`;
+const LOBBY_APP_URL = configLoadError ? null : config.frontends.lobby;
 
 /**
  * 輔助函式：用來在網頁上亮起成功或失敗的中文小貼紙
@@ -69,13 +81,14 @@ registerForm.addEventListener('submit', async (event) => {
 
   console.log('🖱️ [動作] 使用者按下了註冊按鈕！觸發 submit 事件。');
 
-  // 進入備戰狀態：將按鈕文字改成載入中，並暫時停用按鈕，防止使用者狂點
-  submitBtn.textContent = '正在初始化連線...';
-  submitBtn.disabled = true;
+  if (configLoadError) {
+    showMessage('error', '❌ 無法連線至服務器，請稍後重試。');
+    return;
+  }
 
-  // 偵錯小巧思：在網頁畫面上也先秀出正在連線的通知，這樣你就知道 JS 有在動！
-  messageBox.style.display = 'block';
-  showMessage('success', '⏳ 正在建立跨網域安全連線通道...');
+  // 進入備戰狀態：將按鈕文字改成載入中，並暫時停用按鈕，防止使用者狂點
+  submitBtn.textContent = '正在處理...';
+  submitBtn.disabled = true;
 
   // 撈出使用者在畫面上輸入的真實帳密
   const requestBody = {
@@ -132,13 +145,14 @@ loginForm.addEventListener('submit', async (event) => {
 
   console.log('🖱️ [動作] 使用者按下了登入按鈕！觸發 submit 事件。');
 
-  // 進入備戰狀態：將按鈕文字改成載入中，並暫時停用按鈕，防止使用者狂點
-  loginBtn.textContent = '正在初始化連線...';
-  loginBtn.disabled = true;
+  if (configLoadError) {
+    showMessage('error', '❌ 無法連線至服務器，請稍後重試。');
+    return;
+  }
 
-  // 偵錯小巧思：在網頁畫面上也先秀出正在連線的通知，這樣你就知道 JS 有在動！
-  messageBox.style.display = 'block';
-  showMessage('success', '⏳ 正在建立跨網域安全連線通道...');
+  // 進入備戰狀態：將按鈕文字改成載入中，並暫時停用按鈕，防止使用者狂點
+  loginBtn.textContent = '正在處理...';
+  loginBtn.disabled = true;
 
   // 撈出使用者在畫面上輸入的真實帳密
   const requestBody = {
