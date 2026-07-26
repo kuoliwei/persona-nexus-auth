@@ -1,21 +1,17 @@
-let config = null;
+// 同源部署後，前端所有 API 呼叫都走相對路徑（/api/...），
+// 因此不再需要從後端取得 gateway 或其他前端的網址。
+//
+// 這個模組只剩一個用途：啟動時確認後端可達。呼叫端會 catch 失敗並顯示
+// 「無法連線至服務器」的畫面，所以這裡刻意讓錯誤往外拋。
+let probed = false;
 
 export async function loadConfig() {
-  if (config) return config;
+  if (probed) return;
 
-  try {
-    const response = await fetch('http://localhost:8000/api/config');
-    config = await response.json();
-    return config;
-  } catch (error) {
-    console.error('Failed to load config from gateway:', error);
-    throw error;
+  const response = await fetch('/api/config');
+  if (!response.ok) {
+    throw new Error(`Gateway unreachable: HTTP ${response.status}`);
   }
-}
 
-export function getConfig() {
-  if (!config) {
-    throw new Error('Config not loaded. Call loadConfig() first.');
-  }
-  return config;
+  probed = true;
 }

@@ -1,0 +1,78 @@
+schema: spec-driven
+
+# Project context
+# 顯示給 AI 在建立/修改 openspec 文件時參考。本檔描述的是 persona-nexus-auth「當前實際」的架構，
+# 不是理想版——刻意記錄遺留代碼與過時假設，因為它們正是後續「規格驅動優化」的對象。
+context: |
+  ## persona-nexus-auth（Persona Nexus 平台的登入/註冊前端）
+
+  類 Character.ai 的 AI 角色扮演平台其中一個前端微服務，多頁應用中的其中一頁，只負責
+  **使用者註冊與登入的 UI**，本身不存任何使用者資料。學習性質專案，協作偏好「教學引導、
+  讓使用者自己動手」——解釋原理、給方向，不直接貼完整程式碼。
+
+  ### 技術棧
+  Vite 8（build tool，無 UI 框架，原生 ESM JavaScript）／ Jest 30 + Babel + jsdom（單元測試）。
+  無 TypeScript、無 lint 設定、無 axios（用原生 `fetch`）。
+
+  ### 當前架構（同源部署，經 Caddy）
+  ```
+  瀏覽器 → http://localhost:8080（Caddy 反向代理）
+             ├─ /login/*（本專案，Vite dev server 5173）
+             ├─ /api/*  → api-gateway(8000) → auth-service(3000)
+             └─ /（其餘）→ persona-nexus-lobby(5175)
+  ```
+  `src/config-loader.js` 打相對路徑 `/api/config` 取得 `services.gateway`
+  （預設 `http://localhost:8080/api`，已含 `/api` 前綴）與 `frontends.lobby`；
+  `src/main.js` 用這兩個值組出 `POST {gateway}/auth/register`、`POST {gateway}/auth/login`，
+  以及登入成功後要導向的大廳網址。`vite.config.js` 的 `base: '/login/'`、`host: true`、
+  `allowedHosts: true` 是配合 Caddy 同源部署的現行設定，不是未來規劃。
+
+  ### 頁面結構
+  `index.html` 是單一頁面，內含「註冊」「登入」兩個 `<form>` + tab 切換按鈕，全部由
+  `src/main.js` 監聽 DOM 事件、直接操作 class/文字/disabled 狀態，無任何前端路由或元件框架。
+
+  ### 登入/註冊行為
+  - 註冊成功：顯示成功訊息、reset 表單，**不**自動登入或跳轉。
+  - 登入成功：`main.js` 取出回應中的 `token`，`setTimeout` 1.5 秒後導向
+    `${lobby}/?token=${token}`（token 帶在 URL query string，非 localStorage）。
+    實際由 `persona-nexus-lobby/src/main.js` 接手：從 URL 讀出 token 寫入 `localStorage`
+    後移除該 query 參數。這條路徑目前是通的。
+  - `config-loader.js` 載入設定失敗時：顯示「無法連線至服務器」錯誤訊息，並讓兩個表單的
+    submit handler 提前 return（`configLoadError`旗標），不會發送任何請求。
+
+  ### 已知的鷹架殘留（Vite 預設範例檔案，均未被引用）
+  `src/counter.js`、`src/javascript.svg`、`src/vite.svg`、`src/hero.png`、
+  `src/style copy.css`（與 `src/style.css` 內容完全不同的舊版鷹架樣式副本）。
+
+  ### 測試現況
+  `src/main.test.js`：2 個測試，只驗證「送出表單後按鈕 disable + 顯示載入文字」，
+  用 `eval()` 讀檔載入 `main.js`（而非直接 `import`）。**未測試** API 成功/失敗後的實際行為
+  （沒有斷言登入成功後真的會 redirect、沒有測登入/註冊失敗訊息、沒有測 config 載入失敗情境）。
+
+  ### 架構原則（平台層級）
+  - 前端一律打 api-gateway（實務上先進 Caddy），不直連任何後端 service 裸 port。
+  - 各前端的網址/gateway 位址一律透過 `/api/config` 執行期取得，不寫死在程式碼裡。
+
+  ### 協作約定
+  - 學習導向，優先解釋原理與設計思考。
+  - 本服務是獨立 git repo（非 monorepo）。
+
+# Per-artifact rules
+rules:
+  proposal:
+    - 中文撰寫，200-500 字為宜
+    - 包含「為什麼做」(Why)、「變更清單」(What Changes)、「影響範圍」(Impact)
+    - 若動到 UI 可觀察行為（文案、跳轉時機、表單驗證），清楚列舉新增或移除項
+    - 修改既有行為要說明是否影響其他前端（例如 localStorage key、URL 參數格式）
+  specs:
+    - 使用 Given/When/Then scenario 格式，每個 Requirement 至少一個 Scenario
+    - RFC 2119 關鍵字（MUST/SHALL/SHOULD/MAY）標示需求強度
+    - 涉及與後端契約的行為，要註明實際打的 HTTP method/路徑與請求/回應格式
+    - Delta Spec 格式分 ADDED / MODIFIED / REMOVED 三節
+  design:
+    - 架構決策與權衡說明；跨前端的資料流（如 token 傳遞）畫時序或流程圖
+    - 明確標示「當前」與「優化後」的差異（架構圖前後對照）
+  tasks:
+    - 每個任務控制在 2-3 小時內可完成
+    - 層級清楚（子任務縮排），標示依賴關係
+    - 檢查項包含單元測試與手動瀏覽器驗證
