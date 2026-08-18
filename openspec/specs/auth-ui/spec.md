@@ -2,8 +2,10 @@
 
 > 本檔是 persona-nexus-auth **當前實際行為**的規格（as-is），逐條對照原始碼撰寫，不做美化、不寫理想版。
 > 已納入 change `simplify-auth-ui` 的優化結果（新增 `api.js`、簡化 `config-loader.js` 為僅探測
-> 可達性、改用相對路徑、`messageBox` 加上 `aria-live`、修復壞掉的單元測試、刪除鷹架死檔案）。
-> 最後對照時間：與 `src/`、`index.html`、`vite.config.js` 現況一致。
+> 可達性、改用相對路徑、`messageBox` 加上 `aria-live`、修復壞掉的單元測試、刪除鷹架死檔案），
+> 以及 change `direct-token-storage` 的結果（新增 `session.js`，登入成功時直接把 token 寫入
+> `localStorage`，不再透過 URL query string 交給 lobby）。
+> 最後對照時間：與 `src/`、`index.html`、`vite.config.js` 現況一致（2026-08-12）。
 
 ## Purpose
 
@@ -88,21 +90,23 @@ http://localhost:8080（Caddy 反向代理，同源入口）
 
 ### Requirement: 使用者登入與導向大廳
 系統 SHALL 在使用者送出登入表單時，透過 `src/api.js` 的 `login(email, password)` 呼叫
-`POST /api/auth/login`（相對路徑常數）。登入成功時系統 MUST 將回應中的 `token` 附加於導向
-大廳的相對路徑（`/`）query string 上，並在短暫延遲後執行導向；系統 MUST NOT 在本專案內把
-token 寫入 `localStorage`（該職責屬於接收方 lobby，見下方 Non-goals）。
+`POST /api/auth/login`（相對路徑常數）。登入成功時系統 MUST 呼叫 `src/session.js` 的
+`setToken(result.token)` 將 token 寫入 `localStorage`，並在短暫延遲後導向大廳（`/`，
+不帶任何 query string）。
 
 #### Scenario: 登入成功並導向
 - **WHEN** `loginForm` 送出，`login()` 回傳 `ok: true`
-- **THEN** 顯示成功訊息（含 `result.id`）、`loginForm.reset()`，並以 `setTimeout` 延遲 1500ms 後執行 `window.location.href = \`/?token=${encodeURIComponent(result.token)}\``
+- **THEN** 顯示成功訊息（含 `result.id`）、`loginForm.reset()`，並以 `setTimeout` 延遲
+  1500ms 後，在同一個回呼內依序執行 `setToken(result.token)` 與 `window.location.href = '/'`
 
 #### Scenario: 登入失敗（帳密錯誤）
 - **WHEN** `login()` 回傳 `ok: false`
-- **THEN** 顯示 `❌ 登入失敗：${result.message || '伺服器錯誤'}`，**不**執行任何導向
+- **THEN** 顯示 `❌ 登入失敗：${result.message || '伺服器錯誤'}`，**不**執行任何導向，
+  **不**呼叫 `setToken()`
 
 #### Scenario: 登入時網路層錯誤
 - **WHEN** `login()` 內部 `fetch()` 拋出例外
-- **THEN** 顯示固定文案「❌ 無法連線至服務器，請稍後重試。」
+- **THEN** 顯示固定文案「❌ 無法連線至服務器，請稍後重試。」，**不**呼叫 `setToken()`
 
 ### Requirement: 表單原生驗證
 兩個表單的 email 與密碼欄位 SHALL 使用原生 HTML 屬性（`type="email"`、`required`）做第一層驗證，
@@ -122,8 +126,6 @@ token 寫入 `localStorage`（該職責屬於接收方 lobby，見下方 Non-goa
 
 ## Non-goals（刻意不在本專案範圍內的行為）
 
-- **token 的持久化儲存**：本專案只負責把 token 帶到 URL 交給下一頁，實際寫入 `localStorage`
-  是 `persona-nexus-lobby/src/main.js` 的職責，不在本專案規格內。
 - **登入後自動導向的可設定性**：導向目標路徑（`LOBBY_PATH`，寫死為 `'/'`）與延遲時間（1500ms）
   目前皆為寫死常數，非使用者可調整項。
 - **`persona-nexus-character` 的 `config-loader.js` 重複問題**：獨立 git repo，留待該服務自己

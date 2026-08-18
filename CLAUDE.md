@@ -44,6 +44,9 @@ port（5173）不受支援（`config-loader.js` 的註解已明講，非本次�
   `init()` 內先呼叫 `config-loader.js` 探測後端可達性，再掛上表單事件監聽器
 - `src/api.js` — 集中封裝 `POST /api/auth/register`、`POST /api/auth/login` 的 `fetch()` 呼叫，
   `main.js` 不再直接操作 `fetch`（`simplify-auth-ui` change 新增，解決原本 API 層與 UI 層混雜的問題）
+- `src/session.js` — 只有一個函式 `setToken(token)`，登入成功時把 token 寫入 `localStorage`
+  （`direct-token-storage` change 新增）。本專案不需要 `getToken()`/`clearToken()`，因為本專案
+  自己從不讀取 token
 - `src/config-loader.js` — 只探測 `/api/config` 可達性（見上方架構說明），不再回傳/快取任何資料
 - `src/main.test.js` — Jest 單元測試（jsdom 環境）。**已修復**：改用 `jest.resetModules()` +
   `require('./main.js')` 取代原本會因 `main.js` 含 `import`/內部 async 初始化而壞掉的 `eval()`
@@ -61,12 +64,13 @@ port（5173）不受支援（`config-loader.js` 的註解已明講，非本次�
 ## 登入/註冊流程
 
 - **註冊成功**：顯示成功訊息、reset 表單。**不會**自動登入或跳轉，使用者需自行切到登入頁。
-- **登入成功**：`main.js` 從回應取出 `token`，用 `setTimeout` 延遲 1.5 秒後，導向
-  `${LOBBY_PATH}?token=${token}`（`LOBBY_PATH` 寫死為 `'/'`；token 帶在 URL query string，
-  不是存到 `localStorage`）。實際接手的是 `persona-nexus-lobby/src/main.js`：它會從 URL 讀出
-  `token` 參數、寫進 `localStorage`（key 為 `'token'`）、再把 `token` 參數從網址移除。這條路徑
-  是通的，登入後確實能進入大廳。
-  - 值得注意的細節：這 1.5 秒的 `setTimeout` 期間，`loginForm.reset()` 已先執行，但按鈕要等 `finally` 區塊才會復原成可點擊狀態；這段等待對使用者體感是「登入成功訊息 + 短暫停留」，非 bug，但沒有寫在任何測試裡明確斷言。
+- **登入成功**：`main.js` 從回應取出 `token`，用 `setTimeout` 延遲 1.5 秒後，在同一個回呼內
+  依序執行 `session.js` 的 `setToken(token)`（寫入 `localStorage`，key 為 `'token'`）與
+  `window.location.href = LOBBY_PATH`（`LOBBY_PATH` 寫死為 `'/'`，不帶任何 query string）。
+  token 由本專案自己直接寫入 `localStorage`，不再透過 URL 交給 `persona-nexus-lobby`
+  （`direct-token-storage` change，2026-08-12）——同源部署下（經 Caddy）本專案與 lobby 共享
+  同一個 origin 的 `localStorage`，網址傳遞已無必要。
+  - 值得注意的細節：這 1.5 秒的 `setTimeout` 期間，`loginForm.reset()` 已先執行，但按鈕要等 `finally` 區塊才會復原成可點擊狀態；這段等待對使用者體感是「登入成功訊息 + 短暫停留」，非 bug，但沒有寫在任何測試裡明確斷言。`setToken()` 的呼叫刻意留在 `setTimeout` 回呼內（不提前執行），維持這段時序不變。
 
 ## 已知問題與修法記錄
 
@@ -84,6 +88,17 @@ port（5173）不受支援（`config-loader.js` 的註解已明講，非本次�
 - `messageBox` 加上 `aria-live="polite"`（WCAG 4.1.3 可及性修正）
 - **本輪刻意不處理**：`persona-nexus-character` 的 `config-loader.js` 仍是舊版重複實作，
   屬於獨立 repo，留待該服務自己的稽核輪次處理
+
+依《網頁架構設計原則》稽核落差 1 後，以 change `direct-token-storage`（2026-08-12）統一
+token 傳遞機制：
+- 新增 `src/session.js`，`setToken(token)` 是唯一函式
+- 登入成功時直接把 token 寫入 `localStorage`，不再透過 URL query string 交給
+  `persona-nexus-lobby`（該專案同步以 change `auth-token-handoff-cleanup` 移除對應的
+  網址讀取死碼與 `api.js` 的 `setToken()`）
+- 本輪刻意不處理：`localStorage` vs `httpOnly` cookie 的存放方案取捨（已與使用者完整討論
+  XSS/CSRF 威脅模型，決定另找時間專門評估）、lobby↔character/chat/rpg-scene 的 iframe
+  token 傳遞方式統一（獨立的既有落差）、token 生命週期重新設計（現況仍為單層 7 天 token，
+  無 refresh、無 revoke）
 
 ## 協作慣例
 

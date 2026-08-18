@@ -28,6 +28,7 @@ if (!registerForm || !emailInput || !passwordInput || !loginEmailInput || !login
 
 import { loadConfig } from './config-loader.js';
 import { register, login } from './api.js';
+import { setToken } from './session.js';
 
 // 登入成功後導向大廳：同源部署下大廳固定在根路徑。
 const LOBBY_PATH = '/';
@@ -164,7 +165,8 @@ async function init() {
         loginForm.reset();
         const token = result.token;
         setTimeout(() => {
-          window.location.href = `${LOBBY_PATH}?token=${encodeURIComponent(token)}`;
+          setToken(token);
+          window.location.href = LOBBY_PATH;
         }, 1500);
       } else {
         console.warn(`❌ [結果] 後台退回請求，理由：${result.message}`);
